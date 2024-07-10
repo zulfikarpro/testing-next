@@ -29,5 +29,9 @@ exports.crudController = (modelName) => {
     crudMethods.search(Model, req, res);
   };
 
+  methods.count = async (req,res) =>{
+    crudMethods.count(Model, req, res)
+  }
+
   return methods;
 };

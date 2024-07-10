@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const Admin = mongoose.model("Admin");
+const Admin = mongoose.model("SuperUser");
 
 /**
  *  Get all documents of a Model
@@ -38,8 +38,8 @@ exports.list = async (req, res) => {
         message: "Successfully found all documents",
       });
     } else {
-      return res.status(203).json({
-        success: false,
+      return res.status(200).json({
+        success: true,
         result: [],
         pagination,
         message: "Collection is Empty",

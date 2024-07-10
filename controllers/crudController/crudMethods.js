@@ -181,8 +181,8 @@ exports.list = async (Model, req, res) => {
         message: "Successfully found all documents",
       });
     } else {
-      return res.status(203).json({
-        success: false,
+      return res.status(200).json({
+        success: true,
         result: [],
         pagination,
         message: "Collection is Empty",
@@ -194,6 +194,18 @@ exports.list = async (Model, req, res) => {
       .json({ success: false, result: [], message: "Oops there is an Error" });
   }
 };
+
+
+/**
+ *  Get all documents of a Model
+ *  @param {Object} req.query
+ *  @returns {Object} Results with pagination
+ */
+exports.count = async (Model, req, res)=>{
+  console.log('test',req.query)
+  const results = await Model.countDocuments({[`${req.query.key}`]: `${req.query.value}`})
+  return res.status(200).json({success: true, result: {count: results}, message: "success"}).end()
+}
 
 /**
  *  Searching documents with specific properties

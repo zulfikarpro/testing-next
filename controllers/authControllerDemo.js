@@ -8,7 +8,6 @@ require("dotenv").config({ path: ".variables.env" });
 exports.loginDemo = async (req, res) => {
   try {
     const { email, password } = req.body;
-
     // validate
     if (!email || !password)
       return res.status(400).json({ msg: "Not all fields have been entered." });

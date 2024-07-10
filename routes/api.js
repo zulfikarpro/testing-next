@@ -8,6 +8,8 @@ const clientController = require("../controllers/clientController");
 
 const leadController = require("../controllers/leadController");
 const productController = require("../controllers/productController");
+const employeeController = require("../controllers/employeeController");
+const dashboardController = require("../controllers/dashboardController");
 
 //_______________________________ Admin management_______________________________
 
@@ -38,6 +40,16 @@ router.route("/lead/update/:id").patch(catchErrors(leadController.update));
 router.route("/lead/delete/:id").delete(catchErrors(leadController.delete));
 router.route("/lead/search").get(catchErrors(leadController.search));
 router.route("/lead/list").get(catchErrors(leadController.list));
+
+///__________________________________ API for employee ___________________________
+router.route("/employee/create").post(catchErrors(employeeController.create));
+router.route("/employee/read/:id").get(catchErrors(employeeController.read));
+router.route("/employee/update/:id").patch(catchErrors(employeeController.update));
+router.route("/employee/delete/:id").delete(catchErrors(employeeController.delete));
+router.route("/employee/search").get(catchErrors(employeeController.search));
+router.route("/employee/list").get(catchErrors(employeeController.list));
+router.route("/employee/count").get(catchErrors(employeeController.count));
+router.route("/chartdata").get(catchErrors(dashboardController.chartData))
 
 //_____________________________________ API for products ___________________________
 router.route("/product/create").post(catchErrors(productController.create));

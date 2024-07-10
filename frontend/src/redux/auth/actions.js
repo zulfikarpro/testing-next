@@ -9,6 +9,7 @@ export const login = (loginAdminData) => async (dispatch) => {
     payload: { loading: true },
   });
   const data = await authService.login(loginAdminData);
+  console.log('data',data)
 
   if (data.success === true) {
     const authValue = {
@@ -24,7 +25,7 @@ export const login = (loginAdminData) => async (dispatch) => {
     history.push("/");
   } else {
     dispatch({
-      type: actionTypes.FAILED_REQUEST,
+      type: actionTypes.LOGIN_SUCCESS,
       payload: data,
     });
   }

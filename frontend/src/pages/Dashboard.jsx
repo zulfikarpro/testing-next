@@ -1,12 +1,12 @@
-import React, { useRef, useState } from "react";
-import { Form, Input, InputNumber, Space, Divider, Row, Col } from "antd";
-
+import React, { useEffect, useRef, useState } from "react";
+import {  Divider, Row, Col } from "antd";
 import { Layout, Breadcrumb, Statistic, Progress, Tag } from "antd";
-
 import { ArrowUpOutlined, ArrowDownOutlined } from "@ant-design/icons";
-
 import { DashboardLayout } from "@/layout";
 import RecentTable from "@/components/RecentTable";
+import { request } from "@/request";
+import useOnFetch from "@/hooks/useOnFetch";
+import { Bar, Doughnut,HorizontalBar,Line, Pie,LinearScale, PointElement, Tooltip, Legend, TimeScale } from "react-chartjs-2";
 
 const TopCard = ({ title, tagContent, tagColor, prefix }) => {
   return (
@@ -16,7 +16,7 @@ const TopCard = ({ title, tagContent, tagColor, prefix }) => {
         style={{ color: "#595959", fontSize: 13, height: "106px" }}
       >
         <div
-          className="pad15 strong"
+          className="pad5 strong"
           style={{ textAlign: "center", justifyContent: "center" }}
         >
           <h3 style={{ color: "#22075e", marginBottom: 0 }}>{title}</h3>
@@ -24,15 +24,6 @@ const TopCard = ({ title, tagContent, tagColor, prefix }) => {
         <Divider style={{ padding: 0, margin: 0 }}></Divider>
         <div className="pad15">
           <Row gutter={[0, 0]}>
-            <Col className="gutter-row" span={11} style={{ textAlign: "left" }}>
-              <div className="left">{prefix}</div>
-            </Col>
-            <Col className="gutter-row" span={2}>
-              <Divider
-                style={{ padding: "10px 0", justifyContent: "center" }}
-                type="vertical"
-              ></Divider>
-            </Col>
             <Col
               className="gutter-row"
               span={11}
@@ -97,73 +88,84 @@ const PreviewState = ({ tag, color, value }) => {
   );
 };
 export default function Dashboard() {
-  const leadColumns = [
-    {
-      title: "Client",
-      dataIndex: "client",
-    },
-    {
-      title: "phone",
-      dataIndex: "phone",
-    },
-    {
-      title: "Status",
-      dataIndex: "status",
-      render: (status) => {
-        let color = status === "pending" ? "volcano" : "green";
+  const [totalEmployees, setTotalEmployees] = useState()
+  const [jobSatisfactionAvg, setJobSatisfactionAvg] = useState('Low')
+  const [performanceScoreRating, setPerformanceScoreRating] = useState('Low')
+  const [age,setAge] = useState({sumAge1830:0, sumAge3140:0, sumAge4150:0, sumAge5160:0})
+  const [departments, setDepartements] = useState([])
+  const [departmentAttrition, setDepartmentAttrition] = useState([])
+  const [overtime, setOvertime] = useState([])
+  const [overtimeAttrition, setOvertimeAttrition] = useState([])
+  const [ departmentOvertime, setDepartementOvertime] = useState([])
+  const [jobRolePromotion, setJobRolePromotion] = useState([])
+  const [jobRole, setJobRole] = useState([])
+  const { onFetch, result, isLoading, isSuccess,pagination } = useOnFetch();
+  const [attrition, setAttrition] = useState({
+    falseAttrition:0,
+    falseAttritionPercentage:"0%",
+    trueAttrition:0,
+    trueAttritionPercentage:"%"
+  })
+  const [gender, setGender] = useState({
+            male: 0,
+            female: 0,
+            malePercentage: "0%",
+            femalePercentage: "0%"
+        },)
+  
+  
+  useEffect(()=>{
+    const getFn = () => {
+      return request.get("chartData")
+    };
+    onFetch(getFn)
+  },[])
+  useEffect(()=>{if(result){setupData(result)}},[isLoading])
 
-        return <Tag color={color}>{status.toUpperCase()}</Tag>;
-      },
-    },
-  ];
+  const setupData =(resultData)=>{
+    setGender(resultData?.gender)
+    setTotalEmployees(resultData?.totalData)
+    setAttrition(resultData?.attrition)
+    setJobSatisfactionAvg(resultData?.jobSatisfactionLevel)
+    setPerformanceScoreRating(resultData?.performanceScoreRating)
+    setAge(resultData?.age)
+    setDepartements(resultData?.department)
+    setDepartmentAttrition(resultData?.attritionDepartment)
+    setOvertimeAttrition(resultData?.attritionOvertime)
+    setDepartementOvertime(resultData?.overtimeByDepartment)
+    setJobRolePromotion(resultData?.jobRoleLastPromotion)
+    setJobRole(resultData?.jobRole)
+  }
 
-  const productColumns = [
-    {
-      title: "Product Name",
-      dataIndex: "productName",
-    },
+  useEffect(()=>{console.log('age',overtimeAttrition)},[overtimeAttrition])
 
-    {
-      title: "Price",
-      dataIndex: "price",
-    },
-    {
-      title: "Status",
-      dataIndex: "status",
-      render: (status) => {
-        let color = status === "available" ? "green" : "volcano";
-
-        return <Tag color={color}>{status.toUpperCase()}</Tag>;
-      },
-    },
-  ];
 
   return (
     <DashboardLayout>
       <Row gutter={[24, 24]}>
         <TopCard
-          title={"Leads"}
+          title={"Total Employees"}
           tagColor={"cyan"}
           prefix={"This month"}
-          tagContent={"34 000 $"}
+          tagContent={totalEmployees}
         />
         <TopCard
-          title={"Order"}
+          title={"Attrition Rate"}
           tagColor={"purple"}
           prefix={"This month"}
-          tagContent={"34 000 $"}
+          tagContent={attrition?.trueAttritionPercentage}
         />
         <TopCard
-          title={"Payment"}
+          title={"Avg Job Satisfaction"}
           tagColor={"green"}
           prefix={"This month"}
-          tagContent={"34 000 $"}
+          tagContent={jobSatisfactionAvg}
         />
         <TopCard
-          title={"Due Balance"}
+          title={"Avg Performance"}
           tagColor={"red"}
           prefix={"Not Paid"}
-          tagContent={"34 000 $"}
+          tagContent={performanceScoreRating}
         />
       </Row>
       <div className="space30"></div>
@@ -171,58 +173,56 @@ export default function Dashboard() {
         <Col className="gutter-row" span={18}>
           <div className="whiteBox shadow" style={{ height: "380px" }}>
             <Row className="pad10" gutter={[0, 0]}>
-              <Col className="gutter-row" span={8}>
-                <div className="pad15">
-                  <h3 style={{ color: "#22075e", marginBottom: 15 }}>
-                    Lead Preview
-                  </h3>
-                  <PreviewState tag={"Draft"} color={"grey"} value={3} />
-                  <PreviewState tag={"Pending"} color={"bleu"} value={5} />
-                  <PreviewState tag={"Not Paid"} color={"orange"} value={12} />
-                  <PreviewState tag={"Overdue"} color={"red"} value={6} />
-                  <PreviewState
-                    tag={"Partially Paid"}
-                    color={"cyan"}
-                    value={8}
-                  />
-                  <PreviewState tag={"Paid"} color={"green"} value={55} />
+              <Col className="pad5">
+                <div className="pad5">
+                  <Doughnut data={ {
+                    labels: [`Male \n ${gender.malePercentage}`, `Female \n ${gender.femalePercentage}`],
+                    datasets: [
+                    {
+                      label: 'test',
+                      color: ['#95de64'],
+                      backgroundColor: ["#95de64","#ff4d4f"],
+                      data: [gender.male, gender.female],
+                    },
+                  ]}}/>
                 </div>
               </Col>
-              <Col className="gutter-row" span={8}>
-                {" "}
-                <div className="pad15">
-                  <h3 style={{ color: "#22075e", marginBottom: 15 }}>
-                    Quote Preview
-                  </h3>
-                  <PreviewState tag={"Draft"} color={"grey"} value={3} />
-                  <PreviewState tag={"Pending"} color={"bleu"} value={5} />
-                  <PreviewState tag={"Not Paid"} color={"orange"} value={12} />
-                  <PreviewState tag={"Overdue"} color={"red"} value={6} />
-                  <PreviewState
-                    tag={"Partially Paid"}
-                    color={"cyan"}
-                    value={8}
-                  />
-                  <PreviewState tag={"Paid"} color={"green"} value={55} />
-                </div>
-              </Col>
-              <Col className="gutter-row" span={8}>
-                {" "}
-                <div className="pad15">
-                  <h3 style={{ color: "#22075e", marginBottom: 15 }}>
-                    Order Preview
-                  </h3>
-                  <PreviewState tag={"Draft"} color={"grey"} value={3} />
-                  <PreviewState tag={"Pending"} color={"bleu"} value={5} />
-                  <PreviewState tag={"Not Paid"} color={"orange"} value={12} />
-                  <PreviewState tag={"Overdue"} color={"red"} value={6} />
-                  <PreviewState
-                    tag={"Partially Paid"}
-                    color={"cyan"}
-                    value={8}
-                  />
-                  <PreviewState tag={"Paid"} color={"green"} value={55} />
-                </div>
+              <Col className="pad5">
+              <div className="pad5">
+                <HorizontalBar 
+                options={{
+                  plugins: {
+                  legend: {
+                    display: false,
+                  },
+                  tooltip: {
+                    callbacks: {
+                      label: function (data) {
+                        return "Custom Label Text:" + data.formattedValue;
+                      },
+                    },
+                  },
+                },
+              }}
+                data={{
+                labels: ['18-30', '31-40','41-50','51-60'],
+                datasets:[
+                  {
+                    label: ['Age'],
+                    backgroundColor: '#95de64',
+                    borderColor: '#95de64',
+                    borderWidth: 1,
+                    hoverBackgroundColor: 'rgba(255,99,132,0.4)',
+                    hoverBorderColor: 'rgba(255,99,132,1)',
+                    data: [age.sumAge1830, age.sumAge3140, age.sumAge4150, age.sumAge5160],
+                    parsing: {
+                      AxisKey: 'key',
+                      yAxisKey: 'value'
+                    }
+                },
+                ]}}
+                />
+              </div>
               </Col>
             </Row>
           </div>
@@ -230,54 +230,217 @@ export default function Dashboard() {
 
         <Col className="gutter-row" span={6}>
           <div className="whiteBox shadow" style={{ height: "380px" }}>
-            <div
+           <div
               className="pad20"
-              style={{ textAlign: "center", justifyContent: "center" }}
             >
-              <h3 style={{ color: "#22075e", marginBottom: 30 }}>
-                Customer Preview
-              </h3>
-
-              <Progress type="dashboard" percent={25} width={148} />
-              <p>New Customer this Month</p>
-              <Divider />
-              <Statistic
-                title="Active Customer"
-                value={11.28}
-                precision={2}
-                valueStyle={{ color: "#3f8600" }}
-                prefix={<ArrowUpOutlined />}
-                suffix="%"
-              />
+              <p>Work Overtime</p>
+              <Bar
+                width={"30%"}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  scales: {
+                     xAxes: [{barThickness : 40,
+                    gridLines: {
+                      display:false,
+                      drawOnChartArea: false,
+                    },
+                        stacked: true // this should be set to make the bars stacked
+                     }],
+                     yAxes: [{barThickness : 40,
+                        stacked: true // this also..
+                     }]
+                  },
+            
+                  plugins: {
+                    responsive: true,
+                  legend: {
+                    display: false,
+                  },
+                  tooltip: {
+                    callbacks: {
+                      label: function (data) {
+                        return "Custom Label Text:" + data.formattedValue;
+                      },
+                    },
+                  },
+                },
+              }}
+                data={{
+                labels: ['Yes','No'],
+                datasets: [
+                  {
+                    label: "Yes",
+                    data: overtimeAttrition.map(e=>e.attritionCount),
+                    backgroundColor: '#95de64',
+                  },
+                  {
+                    label: 'No',
+                    data: overtimeAttrition.map(e=>e.noAttritionCount),
+                    backgroundColor: '#ff4d4f',
+                    
+                  },
+                ]
+              }}
+                />
             </div>
-          </div>
+          </div> 
         </Col>
       </Row>
       <div className="space30"></div>
       <Row gutter={[24, 24]}>
         <Col className="gutter-row" span={12}>
-          <div className="whiteBox shadow">
-            <div className="pad20">
-              <h3 style={{ color: "#22075e", marginBottom: 5 }}>
-                Recent Leads
-              </h3>
-            </div>
-
-            <RecentTable entity={"lead"} dataTableColumns={leadColumns} />
+          <div className="whiteBox shadow" style={{ textAlign: "center", alignItems:'center',justifyContent: "center", height: '380px' }}>
+          <p>Attrition by Department</p>
+          <Bar 
+                options={{
+                  scales: {
+                     xAxes: [{
+                        stacked: true // this should be set to make the bars stacked
+                     }],
+                     yAxes: [{
+                        stacked: true // this also..
+                     }]
+                  },
+            
+                  plugins: {
+                  legend: {
+                    display: false,
+                  },
+                  tooltip: {
+                    callbacks: {
+                      label: function (data) {
+                        return "Custom Label Text:" + data.formattedValue;
+                      },
+                    },
+                  },
+                },
+              }}
+                data={{
+                labels: departments,
+                datasets: [
+                  {
+                    label: "Yes",
+                    data: departmentAttrition.map(e=>e.attritionCount),
+                    backgroundColor: '#95de64',
+                    // parsing: {
+                    //   yAxisKey: 'net'
+                    // }
+                  },
+                  {
+                    label: 'No',
+                    data: departmentAttrition.map(e=>e.noCount),
+                    backgroundColor: '#ff4d4f',
+                    
+                  },
+                ]
+              }}
+                />
           </div>
         </Col>
-
         <Col className="gutter-row" span={12}>
-          <div className="whiteBox shadow">
-            <div className="pad20">
-              <h3 style={{ color: "#22075e", marginBottom: 5 }}>
-                Recent Products
-              </h3>
-            </div>
-            <RecentTable entity={"product"} dataTableColumns={productColumns} />
+          <div className="whiteBox shadow" style={{ textAlign: "center", alignItems:'center',justifyContent: "center", height: '380px' }}>
+          <p>Work Overtime by Department</p>
+          <Bar 
+                options={{
+                  scales: {
+                     xAxes: [{
+                        // stacked: true // this should be set to make the bars stacked
+                     }],
+                     yAxes: [{
+                        // stacked: true // this also..
+                     }]
+                  },
+            
+                  plugins: {
+                  legend: {
+                    display: false,
+                  },
+                  tooltip: {
+                    callbacks: {
+                      label: function (data) {
+                        return "Custom Label Text:" + data.formattedValue;
+                      },
+                    },
+                  },
+                },
+              }}
+                data={{
+                labels: departments,
+                datasets: [
+                  {
+                    label: "Yes",
+                    data: departmentOvertime.map(e=>e.overtimeCount),
+                    backgroundColor: '#95de64',
+                    // parsing: {
+                    //   yAxisKey: 'net'
+                    // }
+                  },
+                  {
+                    label: 'No',
+                    data: departmentOvertime.map(e=>e.noOvertimeCount),
+                    backgroundColor: '#ff4d4f',
+                    
+                  },
+                ]
+              }}
+                />
           </div>
         </Col>
       </Row>
+      <div className="space30"></div>
+      <Row gutter={[24, 24]}>
+        
+      <Col className="gutter-row" span={12}>
+        <div className="whiteBox shadow" style={{ textAlign: "center", alignItems:'center',justifyContent: "center", height: '380px' }}>
+        <p>Average Years Since Last Promotion</p>
+          <HorizontalBar 
+          options={{
+            plugins: {
+            legend: {
+              display: false,
+            },
+            tooltip: {
+              callbacks: {
+                label: function (data) {
+                  return "Custom Label Text:" + data.formattedValue;
+                },
+              },
+            },
+          },
+        }}
+          data={{
+          labels: jobRole,
+          datasets:[
+            {
+              label: ['Years'],
+              backgroundColor: '#95de64',
+              borderColor: '#95de64',
+              borderWidth: 1,
+              hoverBackgroundColor: 'rgba(255,99,132,0.4)',
+              hoverBorderColor: 'rgba(255,99,132,1)',
+              data: jobRolePromotion.map(e=>e.average),
+              parsing: {
+                AxisKey: 'key',
+                yAxisKey: 'value'
+              }
+          },
+          ]}}
+          />
+        </div>
+        </Col>
+        <Col className="gutter-row" span={12}>
+          <div className="whiteBox shadow" style={{ textAlign: "center", alignItems:'center',justifyContent: "center", height: '380px' }}>
+        <Bar />
+        </div>
+      </Col>
+      </Row>
+
+      <Col className="gutter-row" span={12}>
+        <div className="whiteBox shadow" style={{ textAlign: "center", alignItems:'center',justifyContent: "center", height: '380px' }}>
+          <Line/>
+        </div>
+      </Col>
     </DashboardLayout>
   );
 }

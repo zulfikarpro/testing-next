@@ -21,10 +21,10 @@ const LoginPage = () => {
   // }
   const dispatch = useDispatch();
   const onFinish = (values) => {
+    // console.log('values',values)
     dispatch(login(values));
   };
   return (
-    <>
       <Layout className="layout">
         <Row>
           <Col span={12} offset={6}>
@@ -116,7 +116,6 @@ const LoginPage = () => {
           Lalami
         </Footer>
       </Layout>
-    </>
   );
 };
 

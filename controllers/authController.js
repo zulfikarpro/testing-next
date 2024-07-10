@@ -3,13 +3,15 @@ const jwt = require("jsonwebtoken");
 
 const mongoose = require("mongoose");
 
-const Admin = mongoose.model("Admin");
+const Admin = mongoose.model("SuperUser");
 
 require("dotenv").config({ path: ".variables.env" });
 
 exports.register = async (req, res) => {
   try {
     let { email, password, passwordCheck, name, surname } = req.body;
+
+    console.log(passwordCheck)
 
     if (!email || !password || !passwordCheck)
       return res.status(400).json({ msg: "Not all fields have been entered." });
@@ -30,7 +32,7 @@ exports.register = async (req, res) => {
 
     if (!name) name = email;
 
-    const salt = await bcrypt.genSalt();
+    const salt = await bcrypt.hash(password, 10, (e)=>{ console.log(bcrypt.compare(password, bcrypt.hash))});
     const passwordHash = await bcrypt.hash(password, salt);
 
     const newAdmin = new Admin({
@@ -60,13 +62,12 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-
+    console.log('password',password)
     // validate
     if (!email || !password)
       return res.status(400).json({ msg: "Not all fields have been entered." });
 
     const admin = await Admin.findOne({ email: email });
-    // console.log(admin);
     if (!admin)
       return res.status(400).json({
         success: false,
@@ -74,7 +75,12 @@ exports.login = async (req, res) => {
         message: "No account with this email has been registered.",
       });
 
+
+    const salt = await bcrypt.genSalt();
+    const passwordHash = await bcrypt.hash(password, salt);
     const isMatch = await bcrypt.compare(password, admin.password);
+    //$2a$10$DfVJ4klRKbwOZ3pYk.OemeSMoGP5qOFZ9.wkQtCTGsVFYslTbDkfO
+    console.log(isMatch, password, admin.password)
     if (!isMatch)
       return res.status(400).json({
         success: false,
@@ -89,6 +95,7 @@ exports.login = async (req, res) => {
       },
       process.env.JWT_SECRET
     );
+    console.log('token',token)
 
     const result = await Admin.findOneAndUpdate(
       { _id: admin._id },
@@ -156,7 +163,6 @@ exports.isValidToken = async (req, res, next) => {
       });
     else {
       req.admin = admin;
-      // console.log(req.admin);
       next();
     }
   } catch (err) {
